@@ -14,7 +14,17 @@ CRandomFalloff::CRandomFalloff()
     CLxUser_PacketService sPkt;
     CLxUser_MeshService   sMesh;
 
-    dyna_Add(ATTRs_ANGLE, LXsTYPE_ANGLE);
+    static const LXtTextValueHint random_sources[] = {
+        { SOURCE_ELEMENT, "element" },
+        { SOURCE_ISLAND, "island" },
+        { SOURCE_PARTTAG, "partTag" },
+        { 0, "=random_sources" }, 0
+    };
+
+    dyna_Add(ATTRs_SOURCE, LXsTYPE_INTEGER);
+    dyna_SetHint(ATTRa_SOURCE, random_sources);
+    dyna_Add(ATTRs_SEED, LXsTYPE_INTEGER);
+    dyna_Add(ATTRs_BIPOLAR, LXsTYPE_BOOLEAN);
 
     tool_Reset();
 
@@ -43,7 +53,9 @@ CRandomFalloff::CRandomFalloff()
  */
 void CRandomFalloff::tool_Reset()
 {
-    dyna_Value(ATTRa_ANGLE).SetFlt(0.01 * LXx_DEG2RAD);
+    dyna_Value(ATTRa_SOURCE).SetInt(SOURCE_ISLAND);
+    dyna_Value(ATTRa_SEED).SetInt(1074);
+    dyna_Value(ATTRa_BIPOLAR).SetInt(0);
 }
 
 /*
@@ -72,7 +84,7 @@ LXtID4 CRandomFalloff::tool_Task()
  */
 unsigned CRandomFalloff::tmod_Flags()
 {
-    return LXfTMOD_DRAW_3D | LXfTMOD_I0_INPUT;
+    return LXfTMOD_I0_INPUT;
 }
 
 LxResult CRandomFalloff::tmod_Enable(ILxUnknownID obj)
@@ -91,31 +103,15 @@ LxResult CRandomFalloff::tmod_Enable(ILxUnknownID obj)
 
 LxResult CRandomFalloff::tmod_Down(ILxUnknownID vts, ILxUnknownID adjust)
 {
-	CLxUser_AdjustTool	 at (adjust);
-	CLxUser_VectorStack	 vec (vts);
-	LXpToolActionCenter* acen = static_cast<LXpToolActionCenter*>(vec.Read (offset_center));
-	LXpToolInputEvent*   ipak = static_cast<LXpToolInputEvent*>(vec.Read(offset_input));
-    LXpToolScreenEvent*  spak = static_cast<LXpToolScreenEvent*>(vec.Read(offset_screen));
-    
-    at.Invalidate();
     return LXe_TRUE;
 }
 
 void CRandomFalloff::tmod_Move(ILxUnknownID vts, ILxUnknownID adjust)
 {
-    CLxUser_AdjustTool at(adjust);
-    CLxUser_VectorStack vec(vts);
-    LXpToolScreenEvent*  spak = static_cast<LXpToolScreenEvent*>(vec.Read(offset_screen));
-	LXpToolInputEvent*   ipak = static_cast<LXpToolInputEvent*>(vec.Read(offset_input));
-
-    at.Invalidate();
 }
 
 void CRandomFalloff::tmod_Up(ILxUnknownID vts, ILxUnknownID adjust)
 {
-    CLxUser_AdjustTool at(adjust);
-    CLxUser_VectorStack vec(vts);
-    at.Invalidate();
 }
 
 void CRandomFalloff::tmod_Initialize (ILxUnknownID vts, ILxUnknownID adjust, unsigned int flags)
@@ -131,10 +127,9 @@ LxResult CRandomFalloff::atrui_UIHints(unsigned int index, ILxUnknownID hints)
 {
 	CLxLoc_UIHints		 uiHints(hints);
 
-    if (index == ATTRa_ANGLE)
+    if (index == ATTRa_SEED)
     {
-        uiHints.MinFloat(0.0);
-        uiHints.MaxFloat(90.0 * LXx_DEG2RAD);
+        uiHints.MinInt(2);
     }
     return LXe_OK;
 }
@@ -194,11 +189,15 @@ void CRandomFalloff::tool_Evaluate(ILxUnknownID vts)
     printf("tool_Evaluate\n");
     CFalloffPacket* packet = spawer.Alloc(&packet_obj);
 
+    int source = CRandomMap::SOURCE_PARTTAG;
+    int seed = 1074;
+    int bipolar = 0;
+    dyna_Value(ATTRa_SOURCE).GetInt(&source);
+    dyna_Value(ATTRa_SEED).GetInt(&seed);
+    dyna_Value(ATTRa_BIPOLAR).GetInt(&bipolar);
+
     CLxUser_LayerScan scan;
     CLxUser_Mesh      mesh;
-    int seed = 1074;
-    int source = CRandomMap::SOURCE_PARTTAG;
-    bool bipolar = false;
     LXtID4 type = subject.Type();
 
     s_layer.BeginScan(LXf_LAYERSCAN_ACTIVE | LXf_LAYERSCAN_MARKALL, scan);
@@ -206,7 +205,7 @@ void CRandomFalloff::tool_Evaluate(ILxUnknownID vts)
     for (auto i = 0u; i < count; i++)
     {
         scan.BaseMeshByIndex(i, mesh);
-        CRandomMap map(mesh, seed, source, bipolar, type);
+        CRandomMap map(mesh, seed, source, static_cast<bool>(bipolar), type);
         packet->m_maps.push_back(map);
     }
     vecStack.SetPacket(offset_falloff, packet_obj);

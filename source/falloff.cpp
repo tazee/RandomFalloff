@@ -8,21 +8,21 @@
 #include <random>
 
 
+// Falloff Evaluator
 double CFalloffPacket::fp_Evaluate(LXtFVector pos, LXtPointID vertID, LXtPolygonID polyID)
 {
-    //printf("CFalloffPacket::fp_Evaluate %f %f %f\n", pos[0], pos[1], pos[2]);
     for (auto& map : m_maps)
     {
         double weight;
         if (map.Evaluate(vertID, weight))
         {
-            //printf("weight = %f vertID %p\n", weight, vertID);
             return weight;
         }
     } 
     return 1.0;
 }
 
+// Setup random groups per vertex element
 class VertElementVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -51,6 +51,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per edge element
 class EdgeElementVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -84,6 +85,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per polygon element
 class PolyElementVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -120,6 +122,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per mesh element
 void CRandomMap::BuildByElement(LXtID4 type)
 {
     m_groups.clear();
@@ -156,6 +159,7 @@ void CRandomMap::BuildByElement(LXtID4 type)
     }
 }
 
+// Setup random groups per vertex island
 class VertIslandVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -182,7 +186,6 @@ public:
 
         unsigned int part = m_context->m_groups.size();
         struct CPointGroup group;
-        //printf("Start vertID %p part = %u\n", vertID, part);
 
         while (!stack.empty())
         {
@@ -198,7 +201,6 @@ public:
             }
             unsigned int npoint;
             vert.PointCount(&npoint);
-            //printf("-- pop vert (%u) npoint (%u) stack %zu\n", index, npoint, stack.size());
             for (auto i = 0u; i < npoint; i++)
             {
                 vert.PointByIndex(i, &vertID);
@@ -209,7 +211,6 @@ public:
                 if (vert0.TestMarks(m_mark_pick) == LXe_FALSE)
                     continue;
                 stack.push_back(vertID);
-                //printf("** push vert (%u) stack %zu\n", index, stack.size());
                 vert0.SetMarks(m_mark_done);
             }
         }
@@ -224,6 +225,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per edge island
 class EdgeIslandVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -249,7 +251,6 @@ public:
 
         unsigned int part = m_context->m_groups.size();
         struct CPointGroup group;
-        //printf("Start edgeID %p part = %u\n", edgeID, part);
 
         while (!stack.empty())
         {
@@ -258,7 +259,6 @@ public:
             unsigned int index;
             edge.Select(edgeID);
             edge.Index(&index);
-            //printf("-- pop edge (%u) stack %zu\n", index, stack.size());
             std::vector<LXtPointID> points(2);
             edge.Endpoints(&points[0], &points[1]);
             for (auto i = 0u; i < points.size(); i++)
@@ -282,7 +282,6 @@ public:
                         continue;
                     edge1.Index(&index);
                     stack.push_back(edgeID);
-                    //printf("** push edge (%u) stack %zu\n", index, stack.size());
                     edge1.SetMarks(m_mark_done);
                 }
             }
@@ -298,6 +297,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per polygon island
 class PolyIslandVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -323,7 +323,6 @@ public:
 
         unsigned int part = m_context->m_groups.size();
         struct CPointGroup group;
-        //printf("Start pol %p part = %u\n", pol, part);
 
         while (!stack.empty())
         {
@@ -332,7 +331,6 @@ public:
             int index;
             poly.Select(pol);
             poly.Index(&index);
-            //printf("-- pop pol (%d) stack %zu\n", index, stack.size());
             unsigned int nvert = 0u, npol = 0u;
             poly.VertexCount(&nvert);
             for (auto i = 0u; i < nvert; i++)
@@ -356,7 +354,6 @@ public:
                         continue;
                     poly1.Index(&index);
                     stack.push_back(pol);
-                    //printf("** push pol (%d) stack %zu\n", index, stack.size());
                     poly1.SetMarks(m_mark_done);
                 }
             }
@@ -372,6 +369,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per selection island
 void CRandomMap::BuildByIsland(LXtID4 type)
 {
     m_groups.clear();
@@ -444,6 +442,7 @@ void CRandomMap::BuildByIsland(LXtID4 type)
     }
 }
 
+// Setup random groups per part polygon tag
 class PolyPartVisitor : public CLxImpl_AbstractVisitor
 {
 public:
@@ -466,7 +465,6 @@ public:
             part = m_context->m_groups.size();
             m_context->m_groups.resize(part + 1);
             m_map[strTag] = part;
-            printf("new part (%u) partTag (%s)\n", part, partTag);
             if (strTag == "Default")
                 m_context->m_groups[part].zero_weight = true;
         }
@@ -501,6 +499,7 @@ public:
     class CRandomMap* m_context;
 };
 
+// Setup random groups per part polygon tag
 void CRandomMap::BuildByPartTag()
 {
     m_groups.clear();

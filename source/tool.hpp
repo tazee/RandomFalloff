@@ -39,9 +39,13 @@ using namespace lx_err;
 const char* SRVNAME_TOOL = "tool.randomFalloff";
 const char* SRVNAME_FALLOFF = "falloff.random";
 
-#define ATTRs_ANGLE    "angle"
+#define ATTRs_SOURCE    "source"
+#define ATTRs_SEED      "seed"
+#define ATTRs_BIPOLAR   "bipolar"
 
-#define ATTRa_ANGLE     0
+#define ATTRa_SOURCE    0
+#define ATTRa_SEED      1
+#define ATTRa_BIPOLAR   2
 
 #ifndef LXx_OVERRIDE
 #define LXx_OVERRIDE override
@@ -90,7 +94,11 @@ public:
 	unsigned offset_center;
 	unsigned offset_xfrm;
     unsigned mode_select;
-	
-	LXtItemType m_itemType;
+
+    enum RandomSources {
+        SOURCE_ELEMENT = 0,
+        SOURCE_ISLAND = 1,
+        SOURCE_PARTTAG = 2
+    };
 };
 
