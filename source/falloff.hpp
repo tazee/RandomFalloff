@@ -10,6 +10,10 @@
 #include <lxsdk/lxw_seltypes.hpp>
 #include <lxsdk/lx_value.hpp>
 
+#include <vector>
+#include <unordered_map>
+#include <string>
+
 #ifndef LXx_OVERRIDE
 #define LXx_OVERRIDE override
 #endif

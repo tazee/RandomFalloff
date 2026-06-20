@@ -6,6 +6,8 @@
 
 #include <vector>
 #include <random>
+#include <string>
+#include <unordered_map>
 
 
 // Falloff Evaluator
