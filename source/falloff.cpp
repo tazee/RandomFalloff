@@ -8,6 +8,7 @@
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <numeric>
 
 
 // Falloff Evaluator
