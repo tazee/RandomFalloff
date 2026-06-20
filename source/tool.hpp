@@ -78,6 +78,13 @@ public:
 	LxResult	atrui_UIHints   (unsigned int index, ILxUnknownID hints) LXx_OVERRIDE;
 
     bool TestVertex(unsigned int& primary_index);
+    bool Validate(CLxUser_Subject2Packet& subject, int source, int seed, int bipolar);
+
+    void* m_packet_obj;
+    CFalloffPacket* m_packet;
+    int m_source, m_seed, m_bipolar;
+    LXtID4 m_type;
+    bool m_validated;
 
     CLxUser_LogService   s_log;
     CLxUser_LayerService s_layer;

@@ -123,7 +123,7 @@ public:
 };
 
 // Setup random groups per mesh element
-void CRandomMap::BuildByElement(LXtID4 type)
+void CRandomMap::FalloffElement(LXtID4 type)
 {
     m_groups.clear();
     m_map.clear();
@@ -370,7 +370,7 @@ public:
 };
 
 // Setup random groups per selection island
-void CRandomMap::BuildByIsland(LXtID4 type)
+void CRandomMap::FalloffIsland(LXtID4 type)
 {
     m_groups.clear();
     m_map.clear();
@@ -500,7 +500,7 @@ public:
 };
 
 // Setup random groups per part polygon tag
-void CRandomMap::BuildByPartTag()
+void CRandomMap::FalloffPartTag()
 {
     m_groups.clear();
     m_map.clear();
@@ -521,11 +521,11 @@ CRandomMap::CRandomMap(CLxUser_Mesh& mesh, int seed, int source, bool bipolar, L
     m_mark_pick = mesh_svc.SetMode(LXsMARK_SELECT);
 
     if (source == SOURCE_ELEMENT)
-        BuildByElement(type);
+        FalloffElement(type);
     else if (source == SOURCE_ISLAND)
-        BuildByIsland(type);
+        FalloffIsland(type);
     else
-        BuildByPartTag();
+        FalloffPartTag();
 
     std::vector<int> data(m_groups.size());
     std::iota(data.begin(), data.end(), 0);
@@ -544,7 +544,7 @@ CRandomMap::CRandomMap(CLxUser_Mesh& mesh, int seed, int source, bool bipolar, L
     for (auto i = 0u; i < m_groups.size(); i++)
     {
         m_groups[i].weight = dist(engine);
-        printf("[%u] weight = %f points (%zu)\n", i, m_groups[i].weight, m_groups[i].m_points.size());
+        //printf("[%u] weight = %f points (%zu)\n", i, m_groups[i].weight, m_groups[i].m_points.size());
     }
 }
 

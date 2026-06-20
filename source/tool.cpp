@@ -26,6 +26,12 @@ CRandomFalloff::CRandomFalloff()
     dyna_Add(ATTRs_SEED, LXsTYPE_INTEGER);
     dyna_Add(ATTRs_BIPOLAR, LXsTYPE_BOOLEAN);
 
+    m_packet_obj = nullptr;
+    m_packet = nullptr;
+    m_source = SOURCE_ISLAND;
+    m_seed = 1074;
+    m_bipolar = 0;
+
     tool_Reset();
 
     sPkt.NewVectorType(LXsCATEGORY_TOOL, v_type);
@@ -53,9 +59,9 @@ CRandomFalloff::CRandomFalloff()
  */
 void CRandomFalloff::tool_Reset()
 {
-    dyna_Value(ATTRa_SOURCE).SetInt(SOURCE_ISLAND);
-    dyna_Value(ATTRa_SEED).SetInt(1074);
-    dyna_Value(ATTRa_BIPOLAR).SetInt(0);
+    dyna_Value(ATTRa_SOURCE).SetInt(m_source);
+    dyna_Value(ATTRa_SEED).SetInt(m_seed);
+    dyna_Value(ATTRa_BIPOLAR).SetInt(m_bipolar);
 }
 
 /*
@@ -116,6 +122,7 @@ void CRandomFalloff::tmod_Up(ILxUnknownID vts, ILxUnknownID adjust)
 
 void CRandomFalloff::tmod_Initialize (ILxUnknownID vts, ILxUnknownID adjust, unsigned int flags)
 {
+    m_validated = false;
 }
 
 LxResult CRandomFalloff::atrui_DisableMsg (unsigned int index, ILxUnknownID msg)
@@ -127,7 +134,11 @@ LxResult CRandomFalloff::atrui_UIHints(unsigned int index, ILxUnknownID hints)
 {
 	CLxLoc_UIHints		 uiHints(hints);
 
-    if (index == ATTRa_SEED)
+    if (index == ATTRa_SOURCE)
+    {
+        //uiHints.Class("iChoice");
+    }
+    else if (index == ATTRa_SEED)
     {
         uiHints.MinInt(2);
     }
@@ -171,30 +182,10 @@ bool CRandomFalloff::TestVertex(unsigned int& primary_index)
     return ok;
 }
 
-/*
- * Tool evaluation uses layer scan interface to walk through all the active
- * meshes and visit all the selected polygons.
- */
-void CRandomFalloff::tool_Evaluate(ILxUnknownID vts)
+// Validate the falloff packet data
+bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int seed, int bipolar)
 {
     static CLxSpawner<CFalloffPacket> spawer(SRVNAME_FALLOFF);
-
-    CLxUser_VectorStack vec(vts);
-    CLxUser_Subject2Packet subject;
-    if (vec.ReadObject(offset_subject, subject) == false)
-        return;
-
-    CLxUser_VectorStack vecStack(vts);
-    void* packet_obj;
-    printf("tool_Evaluate\n");
-    CFalloffPacket* packet = spawer.Alloc(&packet_obj);
-
-    int source = CRandomMap::SOURCE_PARTTAG;
-    int seed = 1074;
-    int bipolar = 0;
-    dyna_Value(ATTRa_SOURCE).GetInt(&source);
-    dyna_Value(ATTRa_SEED).GetInt(&seed);
-    dyna_Value(ATTRa_BIPOLAR).GetInt(&bipolar);
 
     CLxUser_LayerScan scan;
     CLxUser_Mesh      mesh;
@@ -202,13 +193,61 @@ void CRandomFalloff::tool_Evaluate(ILxUnknownID vts)
 
     s_layer.BeginScan(LXf_LAYERSCAN_ACTIVE | LXf_LAYERSCAN_MARKALL, scan);
     unsigned int count = scan.NumLayers();
+
+    // Check if all status are same with cached status.
+    if ((m_validated == true)
+     && (m_source == source)
+     && (m_seed == seed)
+     && (m_bipolar == bipolar)
+     && (m_type == type)
+     && (m_packet != nullptr)
+     && (m_packet->m_maps.size() == count))
+        return true;
+
+    if (m_packet == nullptr)
+    {
+        m_packet = spawer.Alloc(&m_packet_obj);
+    }
+
+    m_packet->m_maps.clear();
+
     for (auto i = 0u; i < count; i++)
     {
         scan.BaseMeshByIndex(i, mesh);
         CRandomMap map(mesh, seed, source, static_cast<bool>(bipolar), type);
-        packet->m_maps.push_back(map);
+        m_packet->m_maps.push_back(map);
     }
-    vecStack.SetPacket(offset_falloff, packet_obj);
+
+    m_source = source;
+    m_seed = seed;
+    m_bipolar = bipolar;
+    m_type = type;
+    m_validated = true;
+    printf("** Falloff Packet Updated!\n");
+    return false;
+}
+
+/*
+ * Tool evaluation uses layer scan interface to walk through all the active
+ * meshes and visit all the selected polygons.
+ */
+void CRandomFalloff::tool_Evaluate(ILxUnknownID vts)
+{
+    CLxUser_VectorStack vec(vts);
+    CLxUser_Subject2Packet subject;
+    if (vec.ReadObject(offset_subject, subject) == false)
+        return;
+
+    int source = CRandomMap::SOURCE_PARTTAG;
+    int seed = 1074;
+    int bipolar = 0;
+    dyna_Value(ATTRa_SOURCE).GetInt(&source);
+    dyna_Value(ATTRa_SEED).GetInt(&seed);
+    dyna_Value(ATTRa_BIPOLAR).GetInt(&bipolar);
+    
+    Validate(subject, source, seed, bipolar);
+
+    vec.SetPacket(offset_falloff, m_packet_obj);
 }
 
 /*

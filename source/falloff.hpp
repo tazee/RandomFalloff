@@ -43,9 +43,9 @@ public:
         SOURCE_PARTTAG = 2
     };
 private:
-    void BuildByElement(LXtID4 type);
-    void BuildByIsland(LXtID4 type);
-    void BuildByPartTag();
+    void FalloffElement(LXtID4 type);
+    void FalloffIsland(LXtID4 type);
+    void FalloffPartTag();
 };
 
 class CLxImpl_FalloffPacket
