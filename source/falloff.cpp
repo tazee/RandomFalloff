@@ -391,7 +391,7 @@ void CRandomMap::FalloffIsland(LXtID4 type)
     }
     npart += 1;
     // Use element part index when nothing is selected.
-    if (nselect == nvert)
+    if ((nselect == nvert) && (type == LXiSEL_VERTEX))
     {
         m_groups.resize(npart);
         for (auto i = 0u; i < nvert; i++)

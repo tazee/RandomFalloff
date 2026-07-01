@@ -16,12 +16,6 @@ This kit contains a direct modeling tool for Modo macOS and Windows.
 <div align="left">
 <img src="images/edge.gif" style='max-height: 500px; object-fit: contain'/>
 </div>
-<div align="left">
-<img src="images/polygon.gif" style='max-height: 500px; object-fit: contain'/>
-</div>
-<div align="left">
-<img src="images/cubes.gif" style='max-height: 500px; object-fit: contain'/>
-</div>
 
 ## Installing
 
