@@ -194,9 +194,7 @@ public:
         {
             vertID = stack.back();
             stack.pop_back();
-            unsigned int index;
             vert.Select(vertID);
-            vert.Index(&index);
             if (m_context->m_map.find(vertID) == m_context->m_map.end())
             {
                 group.m_points.push_back(vertID);
@@ -208,7 +206,6 @@ public:
             {
                 vert.PointByIndex(i, &vertID);
                 vert0.Select(vertID);
-                vert0.Index(&index);
                 if (vert0.TestMarks(m_mark_done) == LXe_TRUE)
                     continue;
                 if (vert0.TestMarks(m_mark_pick) == LXe_FALSE)
@@ -259,9 +256,7 @@ public:
         {
             edgeID = stack.back();
             stack.pop_back();
-            unsigned int index;
             edge.Select(edgeID);
-            edge.Index(&index);
             std::vector<LXtPointID> points(2);
             edge.Endpoints(&points[0], &points[1]);
             for (auto i = 0u; i < points.size(); i++)
@@ -271,7 +266,7 @@ public:
                 if (m_context->m_map.find(vertID) == m_context->m_map.end())
                 {
                     group.m_points.push_back(m_vert.ID());
-                    m_context->m_map[m_vert.ID()] = part;
+                    m_context->m_map[vertID] = part;
                 }
                 unsigned int nedge;
                 m_vert.EdgeCount(&nedge);
@@ -283,7 +278,6 @@ public:
                         continue;
                     if (edge1.TestMarks(m_mark_pick) == LXe_FALSE)
                         continue;
-                    edge1.Index(&index);
                     stack.push_back(edgeID);
                     edge1.SetMarks(m_mark_done);
                 }
@@ -331,9 +325,7 @@ public:
         {
             pol = stack.back();
             stack.pop_back();
-            int index;
             poly.Select(pol);
-            poly.Index(&index);
             unsigned int nvert = 0u, npol = 0u;
             poly.VertexCount(&nvert);
             for (auto i = 0u; i < nvert; i++)
@@ -344,7 +336,7 @@ public:
                 if (m_context->m_map.find(vertID) == m_context->m_map.end())
                 {
                     group.m_points.push_back(m_vert.ID());
-                    m_context->m_map[m_vert.ID()] = part;
+                    m_context->m_map[vertID] = part;
                 }
                 m_vert.PolygonCount(&npol);
                 for (auto j = 0u; j < npol; j++)
@@ -355,7 +347,6 @@ public:
                         continue;
                     if (poly1.TestMarks(m_mark_pick) == LXe_FALSE)
                         continue;
-                    poly1.Index(&index);
                     stack.push_back(pol);
                     poly1.SetMarks(m_mark_done);
                 }
@@ -523,11 +514,24 @@ CRandomMap::CRandomMap(CLxUser_Mesh& mesh, int seed, int source, bool bipolar, L
     m_poly.fromMesh(mesh);
     m_vert.fromMesh(mesh);
     m_mark_pick = mesh_svc.SetMode(LXsMARK_SELECT);
+    m_mark_done = mesh_svc.SetMode(LXsMARK_USER_0);
+    m_seed = seed;
+    m_source = source;
+    m_bipolar = bipolar;
+    m_type = type;
+    m_nvert = 0;
+    m_validated = false;
+}
 
-    if (source == SOURCE_ELEMENT)
-        FalloffElement(type);
-    else if (source == SOURCE_ISLAND)
-        FalloffIsland(type);
+bool CRandomMap::Validate()
+{
+    if (m_validated)
+        return true;
+
+    if (m_source == SOURCE_ELEMENT)
+        FalloffElement(m_type);
+    else if (m_source == SOURCE_ISLAND)
+        FalloffIsland(m_type);
     else
         FalloffPartTag();
 
@@ -535,25 +539,31 @@ CRandomMap::CRandomMap(CLxUser_Mesh& mesh, int seed, int source, bool bipolar, L
     std::iota(data.begin(), data.end(), 0);
     
     std::vector<int> combined_seed;
-    combined_seed.push_back(seed);
+    combined_seed.push_back(m_seed);
     combined_seed.insert(combined_seed.end(), data.begin(), data.end());
     std::seed_seq seq(combined_seed.begin(), combined_seed.end());
     std::mt19937 engine(seq);
 
-    double weight_min = bipolar ? -1.0 : 0.0;
+    double weight_min = m_bipolar ? -1.0 : 0.0;
     double weight_max = 1.0;
 
     std::uniform_real_distribution<double> dist(weight_min, weight_max);
+    //printf("Validate groups = %zu nvert = %d\n", m_groups.size(), m_mesh.NPoints());
 
     for (auto i = 0u; i < m_groups.size(); i++)
     {
         m_groups[i].weight = dist(engine);
         //printf("[%u] weight = %f points (%zu)\n", i, m_groups[i].weight, m_groups[i].m_points.size());
     }
+
+    m_nvert = m_mesh.NPoints();
+    m_validated = true;
+    return false;
 }
 
 bool CRandomMap::Evaluate(LXtPointID vertID, double& weight)
 {
+    Validate();
     if (m_map.find(vertID) != m_map.end())
     {
         if (m_groups[m_map[vertID]].zero_weight)

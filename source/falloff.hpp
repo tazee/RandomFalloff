@@ -30,6 +30,7 @@ class CRandomMap
 public:
     CRandomMap(CLxUser_Mesh& mesh, int seed, int source, bool bipolar, LXtID4 type);
     bool Evaluate(LXtPointID vertID, double& weight);
+    bool Validate();
 
     std::vector<CPointGroup> m_groups;
     std::unordered_map<LXtPointID, unsigned int> m_map;
@@ -40,6 +41,11 @@ public:
     LXtMarkMode m_mark_done;
     CLxUser_MeshService mesh_svc;
     unsigned int m_npart;
+
+    int m_source, m_seed, m_bipolar;
+    LXtID4 m_type;
+    int m_nvert;
+    bool m_validated;
 
     enum RandomSource {
         SOURCE_ELEMENT = 0,

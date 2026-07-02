@@ -233,7 +233,6 @@ bool CRandomFalloff::ValidateSelectPackets(LXtID4 type)
             if (m_select_packets[i] != select_packets[i])
             {
                 m_select_packets = select_packets;
-                printf("-- Selection Packet Updated!\n");
                 return false;
             }
         }
@@ -241,6 +240,24 @@ bool CRandomFalloff::ValidateSelectPackets(LXtID4 type)
     }
     m_select_packets = select_packets;
     return false;
+}
+
+// Validate mesh data
+bool CRandomFalloff::ValidateMeshes(CLxUser_LayerScan& scan)
+{
+    unsigned int count = scan.NumLayers();
+    if (count != m_packet->m_maps.size())
+       return false;
+    for (auto i = 0u; i < m_packet->m_maps.size(); i++)
+    {
+        CLxUser_Mesh mesh;
+        scan.BaseMeshByIndex(i, mesh);
+        if (mesh.NPoints() != m_packet->m_maps[i].m_nvert)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Validate the falloff packet data
@@ -252,7 +269,7 @@ bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int s
     CLxUser_Mesh      mesh;
     LXtID4 type = subject.Type();
 
-    s_layer.BeginScan(LXf_LAYERSCAN_ACTIVE | LXf_LAYERSCAN_MARKALL, scan);
+    subject.BeginScan(LXf_LAYERSCAN_ACTIVE | LXf_LAYERSCAN_MARKALL, scan);
     unsigned int count = scan.NumLayers();
 
     // Check if all status are same with cached status.
@@ -262,7 +279,7 @@ bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int s
      && (m_bipolar == bipolar)
      && (m_type == type)
      && (m_packet != nullptr)
-     && (m_packet->m_maps.size() == count)
+     && (ValidateMeshes(scan) == true)
      && (ValidateSelectPackets(type) == true))
         return true;
 
@@ -285,7 +302,7 @@ bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int s
     m_bipolar = bipolar;
     m_type = type;
     m_validated = true;
-    printf("** Falloff Packet Updated!\n");
+    //printf("** Falloff Packet Updated!\n");
     return false;
 }
 

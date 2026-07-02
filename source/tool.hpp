@@ -80,6 +80,7 @@ public:
     bool TestVertex(unsigned int& primary_index);
     bool Validate(CLxUser_Subject2Packet& subject, int source, int seed, int bipolar);
     bool ValidateSelectPackets(LXtID4 type);
+    bool ValidateMeshes(CLxUser_LayerScan& scan);
 
     void* m_packet_obj;
     CFalloffPacket* m_packet;
