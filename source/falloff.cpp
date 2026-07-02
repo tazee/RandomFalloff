@@ -458,8 +458,11 @@ public:
 
         const char* partTag = "";
         if (m_ptag.Get(LXi_PTAG_PART, &partTag) == LXe_NOTFOUND)
+        {
+            printf("** No part tag found for polygon %p\n", m_poly.ID());
             return LXe_OK;
-        
+        }
+
         std::string strTag(partTag);
         unsigned int part;
 
@@ -468,8 +471,6 @@ public:
             part = m_context->m_groups.size();
             m_context->m_groups.resize(part + 1);
             m_map[strTag] = part;
-            if (strTag == "Default")
-                m_context->m_groups[part].zero_weight = true;
         }
         else
             part = m_map[strTag];

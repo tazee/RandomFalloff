@@ -79,11 +79,13 @@ public:
 
     bool TestVertex(unsigned int& primary_index);
     bool Validate(CLxUser_Subject2Packet& subject, int source, int seed, int bipolar);
+    bool ValidateSelectPackets(LXtID4 type);
 
     void* m_packet_obj;
     CFalloffPacket* m_packet;
     int m_source, m_seed, m_bipolar;
     LXtID4 m_type;
+    std::vector<void*> m_select_packets;
     bool m_validated;
 
     CLxUser_LogService   s_log;

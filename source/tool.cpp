@@ -123,6 +123,9 @@ void CRandomFalloff::tmod_Up(ILxUnknownID vts, ILxUnknownID adjust)
 void CRandomFalloff::tmod_Initialize (ILxUnknownID vts, ILxUnknownID adjust, unsigned int flags)
 {
     m_validated = false;
+    m_packet = nullptr;
+    m_packet_obj = nullptr;
+    m_select_packets.clear();
 }
 
 LxResult CRandomFalloff::atrui_DisableMsg (unsigned int index, ILxUnknownID msg)
@@ -182,6 +185,64 @@ bool CRandomFalloff::TestVertex(unsigned int& primary_index)
     return ok;
 }
 
+bool CRandomFalloff::ValidateSelectPackets(LXtID4 type)
+{
+    std::vector<void*> select_packets;
+
+    LXtID4 vert_type = s_sel.LookupType(LXsSELTYP_VERTEX);
+    LXtID4 edge_type = s_sel.LookupType(LXsSELTYP_EDGE);
+    LXtID4 poly_type = s_sel.LookupType(LXsSELTYP_POLYGON);
+
+    if (type == vert_type)
+    {
+        CLxUser_VertexPacketTranslation	 vertPkt;
+        vertPkt.autoInit ();
+        int count = s_sel.Count(vert_type);
+        for (int i = 0; i < count; i++)
+        {
+            void* packet = s_sel.ByIndex(vert_type, i);
+            select_packets.push_back(packet);
+        }
+    }
+    else if (type == edge_type)
+    {
+        CLxUser_EdgePacketTranslation	 edgePkt;
+        edgePkt.autoInit ();
+        int count = s_sel.Count(edge_type);
+        for (int i = 0; i < count; i++)
+        {
+            void* packet = s_sel.ByIndex(edge_type, i);
+            select_packets.push_back(packet);
+        }
+    }
+    else if (type == poly_type)
+    {
+        CLxUser_PolygonPacketTranslation	 polyPkt;
+        polyPkt.autoInit ();
+        int count = s_sel.Count(poly_type);
+        for (int i = 0; i < count; i++)
+        {
+            void* packet = s_sel.ByIndex(poly_type, i);
+            select_packets.push_back(packet);
+        }
+    }
+    if (m_select_packets.size() == select_packets.size())
+    {
+        for (auto i = 0u; i < m_select_packets.size(); i++)
+        {
+            if (m_select_packets[i] != select_packets[i])
+            {
+                m_select_packets = select_packets;
+                printf("-- Selection Packet Updated!\n");
+                return false;
+            }
+        }
+        return true;
+    }
+    m_select_packets = select_packets;
+    return false;
+}
+
 // Validate the falloff packet data
 bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int seed, int bipolar)
 {
@@ -201,7 +262,8 @@ bool CRandomFalloff::Validate(CLxUser_Subject2Packet& subject, int source, int s
      && (m_bipolar == bipolar)
      && (m_type == type)
      && (m_packet != nullptr)
-     && (m_packet->m_maps.size() == count))
+     && (m_packet->m_maps.size() == count)
+     && (ValidateSelectPackets(type) == true))
         return true;
 
     if (m_packet == nullptr)
