@@ -2,7 +2,7 @@
 
 <b>Random Falloff</b> is a subtool that sets a random falloff value for mesh elements.<br>
 
-<b>Random Falloff</b> provides three source types to generate random falloff weight values. <b>Element</b> generate falloff weights for each mesh vertex, edge, and polygon. Mesh Elements depend on the currently selected selection mode, generating falloff weights for the selected mesh elements. For vertices shared by edges and polygons, the weights of the vertices constituting the previously set element are used. <b>Selection Island</b> sets falloff weights for consecutive selection units. If nothing is selected, falloff weights are generated for connected polygon groups. <b>Part Tag</b> generate falloff weights for polygon groups with the same part polygon tag. Polygons with the Default tag have a weight of 0.0.
+<b>Random Falloff</b> provides three source types to generate random falloff weight values. <b>Element</b> generate falloff weights for each mesh vertex, edge, and polygon. Mesh Elements depend on the currently selected selection mode, generating falloff weights for the selected mesh elements. For vertices shared by edges and polygons, the weights of the vertices constituting the previously set element are used. <b>Selection Island</b> sets falloff weights for consecutive selection units. If nothing is selected, falloff weights are generated for connected polygon groups. <b>Part Tag</b> generate falloff weights for polygon groups with the same part polygon tag.
 
 <b>Seed</b> is a random seed for generating random values.
 
